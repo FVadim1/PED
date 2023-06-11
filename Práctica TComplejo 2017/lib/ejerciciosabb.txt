@@ -1,0 +1,369 @@
+
+/*
+        TABBCom operator+(const TABBCom &) const;
+        TABBCom operator-(const TABBCom &) const;
+		// metodos añadidos para la practica.
+		// Inserta los elementos de la lista en el arbol, devuelve
+		// el numero de nodos insertados en el arbol.
+		int lista2arbol(const TListaCom &li);
+
+		// Se le pasa una lista y comprueba si los nodos estan en el arbol. 
+		// Devuelve una lista con las posiciones de forma que si 
+		// esta pone 1 sino pone 0
+		int *marcar(const TListaCom &li) const;
+		
+		// devuelve una lista con los nodos que son hojas en el arbol
+		// de los nodos del vector pasado como parametro.
+		TListaCom listaHojas(const TVectorCom &up) const;
+		bool esHoja(const TComplejo &p) const;
+
+		// devuelve una lista con los hijos del complejo de la lsita
+		// pasado
+		TListaCom recogeHijos(const TListaCom &lp) const;
+		TListaCom hijos(const TComplejo &p) const;
+
+
+		//devuelve verdadero si el poro esta en el nivel i del arbol
+		bool estaEnNivel(const TComplejo &lp, int niv) const;
+
+		// Te da una secuencia y si esta dentro del arbol de 
+		// FORMA CONSECUTIVA devuelve true
+		bool esCamino(const TListaCom &lp) const;
+		bool esCaminoRaiz(const TListaCom &lp) const;
+
+		// Devuelve un vector con los padres de los elementos
+		// en el arbol, si no tiene padre se le pondra 
+		// vacio en su posicion.
+		TComplejo soyTuPadre(const TComplejo &p) const;
+		TVectorCom padresDe(const TListaCom &lp) const;
+
+		// Devuelve una lista la cantidad de nodos que tiene 
+		// el subarbol que lo tiene como raiz.
+		int *contarNodosSubarbol(const TListaCom &p) const;
+		int contarHijosComplejo(const TComplejo &p) const;
+
+	
+		/// examen cabeceras.
+		int *examen(const TListaCom &lp) const;
+		int encontrarCaso(const TComplejo &p) const;
+*/
+
+
+/*
+TABBCom TABBCom::operator+(const TABBCom &de) const{
+	TABBCom auxiz(*this), auxde;
+
+	TVectorCom v;
+	int i, l;
+
+	auxde = de;
+	v = auxde.Niveles();
+	i = 1;
+	l = v.Tamano();
+	while(i <= l)
+	{
+		auxiz.Insertar(v[i]);
+		i++;
+	}
+	return auxiz;
+}
+
+TABBCom TABBCom::operator-(const TABBCom &de) const
+{
+	TABBCom auxIzq, auxNuevo;
+	TVectorCom nivelesIzq;
+	bool existe;
+	int i, l;
+
+	auxIzq = *this;
+	nivelesIzq = auxIzq.Niveles();
+	i = 1;
+	l = nivelesIzq.Tamano();
+	while(i <= l)
+	{
+		existe = de.Buscar(nivelesIzq[i]);
+		if(!existe)
+			auxNuevo.Insertar(nivelesIzq[i]);
+		i++;
+	}
+	return auxNuevo;
+}
+
+
+// inserta los elementos de la lista en el arbol.
+int TABBCom::lista2arbol(const TListaCom &li)
+{
+	int num = 0;
+	TListaPosicion po;
+	po = li.Primera();
+	while(!po.EsVacia()){
+		if(Insertar(li.Obtener(po)))
+		   num++;
+		po = po.Siguiente();
+	}
+	return num;
+}
+
+// Se le pasa una lista y si los nodos estan en el arbol devuelve una lista con las posiciones que si esta pone 1 sino pone 0
+int *TABBCom::marcar(const TListaCom &li) const
+{
+	int *v;
+	int i;
+	TListaPosicion po;
+
+	if(li.Longitud() == 0){
+		v = NULL;
+	}
+	else
+	{
+		v = new int [li.Longitud()];
+		po = li.Primera();
+		i = 0;
+		while(!po.EsVacia()){
+			if(Buscar(li.Obtener(po)))
+				v[i] = 1;
+			else
+				v[i] = 0;
+			po = po.Siguiente();
+			i++;
+		}
+	}
+	return v;
+}
+
+// devuelve una lista con los nodos que son hojas en el arbol
+// de los nodos del vector pasado como parametro.
+TListaCom TABBCom::listaHojas(const TVectorCom &up)const
+{
+	TListaCom aux;
+	int i;
+	
+	for(i = 1; i <= up.Longitud(); i++)
+	    if(esHoja(up[i]))
+			aux.Insertar(up[i]);
+	return aux;
+}
+// auxiliar para la anterior, comprueba si el Com esta en un nodo
+// que es hoja en el arbol.
+bool TABBCom::esHoja(const TComplejo &p)const
+{
+	bool es;
+	if(nodo == NULL)
+	   es = false;
+	else if(p.Volumen() < nodo->item.Volumen())
+	   es = nodo->iz.esHoja(p);
+	else if(p.Volumen() > nodo->item.Volumen())
+	   es = nodo->de.esHoja(p);
+	else if(nodo->iz.nodo == NULL && nodo->de.nodo == NULL)
+	   es = true;
+	else
+	   es = false;
+
+	return es;
+	   
+}
+
+//metodo de arbol que recibe una lista de Coms y devuelve otra lista con los hijos de los nodos pasados como parametros
+TListaCom TABBCom::recogeHijos(const TListaCom &lp) const
+{
+	TListaCom laux;
+	TListaPosicion po;
+	
+	po = lp.Primera();
+	while(!po.EsVacia()){
+		laux = laux + hijos(lp.Obtener(po));////
+		po = po.Siguiente();
+	}
+	return laux;
+}
+
+TListaCom TABBCom::hijos(const TComplejo &p)const
+{
+	TListaCom l;
+	if(nodo != NULL)
+	  {
+		if(p.Volumen()<nodo->item.Volumen())
+		    l=nodo->iz.hijos(p);
+		else if(p.Volumen()>nodo->item.Volumen())
+		    l=nodo->de.hijos(p);
+		else 
+		  {
+			if(nodo->iz.nodo!=NULL)
+			   l.Insertar(nodo->iz.nodo->item);
+			if(nodo->de.nodo!=NULL)
+			   l.Insertar(nodo->de.nodo->item);
+		  }
+	  }
+	return l;
+}
+
+//devuelve verdadero si el Com esta en el nivel i del arbol
+bool TABBCom::estaEnNivel(const TComplejo &lp, int niv)const
+{
+	bool esta;
+
+	if(nodo == NULL)
+		esta = false;
+	else
+		if(niv == 1){
+			if(lp == nodo->item)
+				esta = true;
+			else 
+				esta = false;
+		}
+		else{
+			if(lp.Volumen() < nodo->item.Volumen())
+				esta = nodo->iz.estaEnNivel(lp, niv-1);
+			else
+				esta = nodo->de.estaEnNivel(lp, niv-1);
+		}
+		return esta;
+}
+
+// Te da una secuencia y si esta dentro del arbol de 
+// FORMA CONSECUTIVA devuelve true
+bool TABBCom::esCamino(const TListaCom &lp)const
+{
+	bool es;
+
+	if(esCaminoRaiz(lp))
+		es = true;
+	else
+		es = nodo->iz.esCamino(lp) || nodo->de.esCamino(lp);	   
+	return es;
+}
+
+// comprueba si la lista de Coms pasada como parametro
+// es camino desde la raiz del arbol.
+bool TABBCom::esCaminoRaiz(const TListaCom &lp)const
+{
+	bool es;
+	if(nodo == NULL && lp.Longitud() == 0)
+		es = true;
+	else 
+		if(nodo == NULL && lp.Longitud() != 0)
+			es = false;
+		else 
+			if(nodo->item == lp.Obtener(lp.Primera())){
+				TListaCom aux = lp;
+				TListaPosicion auxPos = aux.Primera();
+				aux.Borrar(auxPos);
+				es = nodo->iz.esCaminoRaiz(aux);
+			}
+			else
+				es = false;
+	return es;	
+}
+
+TComplejo TABBCom::soyTuPadre(const TComplejo &p) const
+{
+	TComplejo vacio;
+
+	if(nodo != NULL){
+		if(nodo->iz.nodo != NULL && nodo->iz.nodo->item == p || 
+			nodo->de.nodo != NULL && nodo->de.nodo->item == p)
+				vacio = nodo->item;
+		else{
+			if(p.Volumen() < nodo->item.Volumen())
+				vacio = nodo->iz.soyTuPadre(p);
+			else
+				vacio = nodo->de.soyTuPadre(p);
+		}
+	}	
+	return vacio;
+}
+
+TVectorCom TABBCom::padresDe(const TListaCom &lp)const
+{
+	TVectorCom v(lp.Longitud());
+	TListaPosicion pos;
+	int i;
+
+	i = 1;
+	pos = lp.Primera();	
+	while(!pos.EsVacia()) {
+		v[i] = soyTuPadre( lp.Obtener(pos) );
+		i++;
+		pos = pos.Siguiente();
+	}
+	return v;
+}
+
+// implementar un metodo en el arbol que reciba una lista y para cada nodode 
+// la lista almacene un vector de enteros, el numero de nodos del subarbol
+// que lo tienen como raiz.
+int TABBCom::contarHijosCom(const TComplejo &p) const
+{
+	int numHijos = 0;
+	if(nodo != NULL)
+	  {
+		if(p == nodo->item)
+		    numHijos = Nodos();
+		else
+		    if(p.Volumen() < nodo->item.Volumen())
+				numHijos = nodo->iz.contarHijosPoro(p);
+		    else
+				numHijos = nodo->de.contarHijosPoro(p);
+	  }
+	return numHijos;
+}
+
+int *TABBCom::contarNodosSubarbol(const TListaPoro &lp)const {
+	int *ve;
+	TListaPosicion p;
+	int i;
+
+	if(lp.Longitud() == 0)
+		ve = NULL;
+	else{
+		ve = new int [lp.Longitud()];
+		p = lp.Primera();
+		i = 0;
+		while(!p.EsVacia()){
+			ve[i] = contarHijosCom(lp.Obtener(p));
+			i++;
+			p = p.Siguiente();
+		}
+	}
+	return ve;
+}
+
+int *TABBCom::examen(const TListaCom &lp)const {
+	int *ve;
+	TListaPosicion p;
+	int i;
+
+	if(lp.Longitud() == 0)
+		ve = NULL;
+	else{
+		ve = new int [lp.Longitud()];
+		p = lp.Primera();
+		i = 0;
+		while(!p.EsVacia()){
+			ve[i] = encontrarCaso(lp.Obtener(p));
+			i++;
+			p = p.Siguiente();
+		}
+	}
+	return ve;
+}
+int TABBCom::encontrarCaso(const TCom &p) const
+{
+	int numHijos = 0;
+	if(nodo != NULL)
+	  {
+		if(p == nodo->item){
+			if(nodo->iz.nodo != NULL)	
+		    	numHijos++;
+			if(nodo->de.nodo != NULL)
+				numHijos++;		
+		}
+		else
+		    if(p.Volumen() < nodo->item.Volumen())
+				numHijos = nodo->iz.encontrarCaso(p);
+		    else
+				numHijos = nodo->de.encontrarCaso(p);
+	  }
+	return numHijos;
+}
+*/
