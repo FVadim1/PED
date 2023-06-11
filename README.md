@@ -1,2 +1,2 @@
-## PED
+## Programación y estructura de datos
 
